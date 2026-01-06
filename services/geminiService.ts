@@ -1,8 +1,30 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const getAiInstance = () => {
+/**
+ * Creates a fresh instance of GoogleGenAI using the current process.env.API_KEY.
+ * This is crucial to pick up keys selected via the platform's key selection dialog.
+ */
+const getAiClient = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+};
+
+/**
+ * Tests the connection by performing a minimal content generation.
+ */
+export const testConnection = async (): Promise<boolean> => {
+  try {
+    const ai = getAiClient();
+    await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: 'hi',
+      config: { maxOutputTokens: 1 }
+    });
+    return true;
+  } catch (error) {
+    console.error("Connection test failed:", error);
+    return false;
+  }
 };
 
 export const getAiComment = async (
@@ -12,7 +34,7 @@ export const getAiComment = async (
   attempts: number
 ): Promise<string> => {
   try {
-    const ai = getAiInstance();
+    const ai = getAiClient();
     const resultText = result === 'correct' ? '정답입니다!' : result === 'high' ? '너무 높습니다' : '너무 낮습니다';
     
     const prompt = `
@@ -38,6 +60,10 @@ export const getAiComment = async (
     return response.text || "운이 좋았거나, 아니면 실력이거나...";
   } catch (error) {
     console.error("Gemini API Error:", error);
+    // If the error suggests key issues, it might be caught here
+    if (error instanceof Error && error.message.includes("not found")) {
+      return "API 키 설정에 문제가 있는 것 같군요. 설정을 확인해보세요.";
+    }
     return "그냥 계속해보세요. 지켜보고 있습니다.";
   }
 };

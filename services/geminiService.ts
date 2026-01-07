@@ -6,7 +6,8 @@ import { GoogleGenAI } from "@google/genai";
  * This is crucial to pick up keys selected via the platform's key selection dialog.
  */
 const getAiClient = () => {
-  return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  // Use process.env.API_KEY directly as per guidelines
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 /**
@@ -18,7 +19,7 @@ export const testConnection = async (): Promise<boolean> => {
     await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: 'hi',
-      config: { maxOutputTokens: 1 }
+      // Removed maxOutputTokens to simplify and follow guidelines unless thinking budget is also set.
     });
     return true;
   } catch (error) {
